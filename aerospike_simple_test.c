@@ -40,6 +40,20 @@ char g_set[MAX_SET_SIZE];
 static char g_key_str[MAX_KEY_STR_SIZE];
 uint32_t g_n_keys;
 
+// The test key used by all basic examples.
+// Created using command line options:
+// -n <namespace>
+// -s <set name>
+// -k <key string>
+as_key g_key;
+
+
+static void dump_bin(const as_bin *p_bin);
+void dump_record(const as_record* p_rec);
+void remove_test_record(aerospike *p_as);
+void cleanup(aerospike *p_as);
+bool read_test_record(aerospike *p_as);
+
 //==============================================================
 // Example Logging Macros
 //
@@ -87,9 +101,13 @@ int main(int argc, char *argv[])
 	}
 	LOG("aerospike_connect() successful");
 
-	/*
+	as_key_init_str(&g_key, g_namespace, g_set, g_key_str);
+
+	//
 	// Start clean.
-	example_remove_test_record(&as);
+	remove_test_record(&as);
+	LOG("remove_test_record() successful");
+
 
 
 	as_record rec;
@@ -99,23 +117,110 @@ int main(int argc, char *argv[])
 
 	// Log its contents.
 	LOG("as_record object to write to database:");
-	example_dump_record(&rec);
+	dump_record(&rec);
 
 	// Write the record to the database.
 	if (aerospike_key_put(&as, &err, NULL, &g_key, &rec) != AEROSPIKE_OK)
 	{
 		LOG("aerospike_key_put() returned %d - %s", err.code, err.message);
-		example_cleanup(&as);
+		cleanup(&as);
 		exit(-1);
 	}	
 	LOG("write successed");
 
-	if (! example_read_test_record(&as))
+	if (! read_test_record(&as))
 	{
-		example_cleanup(&as);
+		cleanup(&as);
 		exit(-1);
 	}
-	*/
+	//
 
 	return 0;
 }
+
+void dump_record(const as_record* p_rec)
+{
+	if (! p_rec)
+	{
+		LOG(" null as_record object");
+		return;
+	}
+
+	if (p_rec->key.valuep)
+	{
+		char *key_val_as_str = as_val_tostring(p_rec->key.valuep);
+		LOG(" key: %s", key_val_as_str);
+		free(key_val_as_str);
+	}
+
+	uint16_t num_bins = as_record_numbins(p_rec);
+	LOG(" generation %u, ttl %u, %u bin%s", p_rec->gen, p_rec->ttl, num_bins, num_bins == 0 ? "s" : (num_bins == 1 ? "1" : "s:"));
+
+	as_record_iterator it;
+	as_record_iterator_init(&it, p_rec);
+
+	while (as_record_iterator_has_next(&it))
+	{
+		dump_bin(as_record_iterator_next(&it));
+	}
+
+	as_record_iterator_destroy(&it);
+}
+
+static void dump_bin(const as_bin *p_bin)
+{
+	if (! p_bin)
+	{
+		LOG(" null as_bin object");
+		return;
+	}
+	char *val_as_str = as_val_tostring(as_bin_get_value(p_bin));
+	LOG(" %s : %s", as_bin_get_name(p_bin), val_as_str);
+	free(val_as_str);
+
+}
+
+void remove_test_record(aerospike *p_as)
+{
+	as_error err;
+	aerospike_key_remove(p_as, &err, NULL, &g_key);
+}
+
+void cleanup(aerospike *p_as)
+{
+	remove_test_record(p_as);
+	as_error err;
+
+	aerospike_close(p_as, &err);
+	aerospike_destroy(p_as);
+}
+
+bool read_test_record(aerospike *p_as)
+{
+	as_error err;
+	as_record *p_rec = NULL;
+
+	// Read the test record from the database.
+	if (aerospike_key_get(p_as, &err, NULL, &g_key, &p_rec) != AEROSPIKE_OK)
+	{
+		LOG("aerospike_key_get() returned %d - %s", err.code, err.message);
+		return false;
+	}
+
+	// If we didn't get an as_record object back, something's wrong.
+	if (! p_rec)
+	{
+		LOG("aerospike_key_get() retrieved null as_record object");
+		return false;
+	}
+
+	// Log the result
+	LOG("record was successfully read from databases:");
+	dump_record(p_rec);
+
+	// Destroy the as_record object.
+	as_record_destroy(p_rec);
+
+	return true;
+}
+
