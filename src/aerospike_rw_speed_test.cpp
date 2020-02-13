@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
 		std::string key = ret[cafe_key_e::customer_id] + ":" + ret[cafe_key_e::customer_id] + ":" + ret[cafe_key_e::trans_date] + "_" + ret[cafe_key_e::trans_time] + "_" + ret[cafe_key_e::ref_nbr];
 
 
-//		std::cout << "key is [" << key << "]" << std::endl;
+		std::cout << "key is [" << key << "]" << std::endl;
 
 		struct block_t
 		{
@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
 			buffer.append(*it);
 		}
 
-//		std::cout << "buffer is [" << buffer << "]" << std::endl;
+		std::cout << "buffer is [" << buffer << "]" << std::endl;
 
 		auto t0 = get_time_usec();
 		auto t1 = get_time_usec();
@@ -269,12 +269,12 @@ void dump_record(const as_record* p_rec)
 	if (p_rec->key.valuep)
 	{
 		char *key_val_as_str = as_val_tostring(p_rec->key.valuep);
-		LOG(" key: %s", key_val_as_str);
+		std::cout << " key: " <<  key_val_as_str << std::endl;
 		free(key_val_as_str);
 	}
 
 	uint16_t num_bins = as_record_numbins(p_rec);
-	LOG(" generation %u, ttl %u, %u bin%s", p_rec->gen, p_rec->ttl, num_bins, num_bins == 0 ? "s" : (num_bins == 1 ? "1" : "s:"));
+	std::cout << " generation " << p_rec->gen << ", ttl " << p_rec->ttl  << ", " << num_bins << ", bin" << std::endl; 
 
 	as_record_iterator it;
 	as_record_iterator_init(&it, p_rec);
