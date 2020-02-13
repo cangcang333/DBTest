@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
 	if (! as_config_add_hosts(&config, "127.0.0.1", 3000))
 	{
 		std::cout << "Invalid host(s)\n";
-		as_event_close();
+		as_event_close_loops();
 		exit(-1);
 	}
 
@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
 
 		auto t0 = get_time_usec();
 		auto t1 = get_time_usec();
-		as_record_set_str(&rec, key, buff);
+		as_record_set_str(&rec, key.c_str(), buffer.c_str());
 
 		// Log its contents.
 		LOG("as_record object to write to database:");
@@ -221,7 +221,6 @@ int main(int argc, char *argv[])
 		auto t2 = get_time_usec();
 		auto off1 = t2 - t1;
 		usetime1 += off1;
-		freeReplyObject(reply);
 
 		auto t3 = get_time_usec();
 		std::string out;
@@ -233,7 +232,6 @@ int main(int argc, char *argv[])
 		auto t4 = get_time_usec();
 		auto off2 = t4 - t3;
 		usetime2 += off2;
-		freeReplyObject(reply);
 
 		count = *((size_t *)out.c_str());
 		auto blocks = (block_t *)(out.c_str() + sizeof(size_t));
@@ -256,7 +254,6 @@ int main(int argc, char *argv[])
 
 	});
 
-	redisFree(c);
 
 
 }
