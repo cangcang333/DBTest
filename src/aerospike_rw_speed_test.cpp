@@ -258,6 +258,35 @@ int main(int argc, char *argv[])
 
 }
 
+void dump_record(const as_record* p_rec)
+{
+	if (! p_rec)
+	{
+		LOG(" null as_record object");
+		return;
+	}
+
+	if (p_rec->key.valuep)
+	{
+		char *key_val_as_str = as_val_tostring(p_rec->key.valuep);
+		LOG(" key: %s", key_val_as_str);
+		free(key_val_as_str);
+	}
+
+	uint16_t num_bins = as_record_numbins(p_rec);
+	LOG(" generation %u, ttl %u, %u bin%s", p_rec->gen, p_rec->ttl, num_bins, num_bins == 0 ? "s" : (num_bins == 1 ? "1" : "s:"));
+
+	as_record_iterator it;
+	as_record_iterator_init(&it, p_rec);
+
+	while (as_record_iterator_has_next(&it))
+	{
+		dump_bin(as_record_iterator_next(&it));
+	}
+
+	as_record_iterator_destroy(&it);
+}
+
 static void dump_bin(const as_bin *p_bin)
 {
 	if (! p_bin)
