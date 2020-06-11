@@ -2,7 +2,12 @@
 #include <stdlib.h>
 #include <jemalloc/jemalloc.h>
 
+// Using jemalloc-master from github
+//
 // gcc jemalloc_test1.c -ljemalloc
+//
+// MALLOC_CONF=prof_leak:true,lg_prof_sample:0,prof_final:true LD_PRELOAD=/usr/local/lib/libjemalloc.so.2 ./a.out
+//
 // jeprof --show_bytes --pdf a.out jeprof.689.1.f.heap > a.pdf
 
 void do_something(size_t i)
